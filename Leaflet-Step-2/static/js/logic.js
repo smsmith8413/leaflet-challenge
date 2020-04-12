@@ -1,6 +1,9 @@
 function markerSize(mag) {
   return mag *10000;
 }
+function markerSig(sig) {
+  return sig *100;
+}
 // Function that will determine the color of a neighborhood based on the borough it belongs to
 function colors(points)
 {
@@ -75,49 +78,70 @@ function createMap(earthquakeData) {
 
       // Add the earthquakes layer to a marker cluster group.
       var earthquakes=L.layerGroup(EarthquakeMarkers)
+    
+      //Loop through to create significance (sig) layer 
+      SignificanceMarkers= earthquakeData.map((feature) =>
+                    //Yes, the geojson 'FORMAT' stores it in reverse, for some reason. (L.geojson parses it as [lat,lng] for you)
+                     //lat                         //long  
+          L.circle([feature.geometry.coordinates[1],feature.geometry.coordinates[0]], {
+              stroke: true,
+              weight: .5,
+              fillOpacity: 0.95,
+              color: "black",
+              fillColor: "blue",
+              radius: markerSig(feature.properties.sig)
+          })
+          .bindPopup("<h2> Significance : " + feature.properties.sig +
+          "</h2><hr><h3>" + feature.properties.place +
+            "</h3><hr><p>" + new Date(feature.properties.time) + "</p>")
+      )
+
+      // Add the earthquakes layer to a marker cluster group.
+      var significance=L.layerGroup(SignificanceMarkers)
       
 
   // Define streetmap and darkmap layers
-  var lightmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
+  var satellitemap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
     attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
     maxZoom: 18,
-    id: "mapbox.light",
+    id: "mapbox.satellite",
     accessToken: API_KEY
   });
 
-  // var streetmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
-  //   attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
-  //   maxZoom: 18,
-  //   id: "mapbox.streets",
-  //   accessToken: API_KEY
-  // });
+  var streetmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
+    attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+    maxZoom: 18,
+    id: "mapbox.streets",
+    accessToken: API_KEY
+  });
 
-  // var darkmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
-  //   attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
-  //   maxZoom: 18,
-  //   id: "mapbox.dark",
-  //   accessToken: API_KEY
-  // });
+  var darkmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
+    attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+    maxZoom: 18,
+    id: "mapbox.dark",
+    accessToken: API_KEY
+  });
 
   // Define a baseMaps object to hold our base layers
   var baseMaps = {
-    "Light Map": lightmap,
-    // "Street Map": streetmap,
-    // "Dark Map": darkmap
+    "Satellite Map": satellitemap,
+    "Street Map": streetmap,
+    "Dark Map": darkmap
   };
 
   // Create overlay object to hold our overlay layer
   var overlayMaps = {
-    Earthquakes: earthquakes
+    Earthquakes: earthquakes,
+    Significance: significance
   };
 
-  // Create our map, giving it the streetmap and earthquakes layers to display on load
+  // Create our map, giving it the satellite and earthquakes layers to display on load
   var myMap = L.map("map", {
     center: [
       37.09, -95.71
     ],
     zoom: 5,
-    layers: [lightmap, earthquakes]
+    layers: [satellitemap, earthquakes]
   });
 
   // Create a layer control
